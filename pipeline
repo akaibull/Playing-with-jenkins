@@ -1,0 +1,36 @@
+pipeline {
+  environment {
+    registry = "192.168.0.26:5000"
+    dockerImage = 'pipeline-nginx'
+  }
+   agent any
+  stages {
+    stage('Cloning Git') {
+      steps {
+          git 'https://github.com/venkatesh19889/nginx.git'
+      }
+    }
+    stage('Building image') {
+      steps{
+        script {
+          dockerImage = docker.build registry + ":$BUILD_NUMBER"
+        }
+      }
+    }
+    stage('Deploy Image') {
+      steps{
+        script {
+            dockerImage.push()
+          }
+        }
+      }
+    
+    stage('Remove Unused docker image') {
+      steps{
+        sh "docker rmi $registry:$BUILD_NUMBER"
+      }
+    }
+    
+  }
+  
+}
