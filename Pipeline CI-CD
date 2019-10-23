@@ -1,13 +1,13 @@
 pipeline {
   environment {
-    registry = "192.168.0.26:5000/nginxapp"
+    registry = "192.168.0.26:5000/nginxapp" #docker private registry tagged image
     dockerImage = 'nginxapp'
   }
    agent any
   stages {
     stage('Cloning Git') {
       steps {
-          git 'https://github.com/venkatesh19889/nginx-origin.git'
+          git 'https://github.com/akaibull/Custom-nginx-Openshift.git'
       }
     }
     stage('Building image') {
