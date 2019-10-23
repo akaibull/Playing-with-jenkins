@@ -1,0 +1,46 @@
+pipeline {
+  environment {
+    registry = "192.168.0.26:5000/nginxapp"
+    dockerImage = 'nginxapp'
+  }
+   agent any
+  stages {
+    stage('Cloning Git') {
+      steps {
+          git 'https://github.com/venkatesh19889/nginx-origin.git'
+      }
+    }
+    stage('Building image') {
+      steps{
+        script {
+          dockerImage = docker.build registry + ":$BUILD_NUMBER"
+        }
+      }
+    }
+      
+    stage('Deploy Image') {
+      steps{
+        script {
+            dockerImage.push()
+          }
+        }
+      }
+    
+    stage('Build App'){
+        steps{
+            script{
+                try{
+                    sh 'oc import-image --from=$registry:$BUILD_NUMBER $dockerImage:$BUILD_NUMBER --insecure=true --confirm'
+                    sh 'sleep 5'
+                    sh 'oc deploy --latest dc/$dockerImage'
+                 }catch(Exception e){
+                    sh 'oc import-image --from=$registry:$BUILD_NUMBER $dockerImage:$BUILD_NUMBER --insecure=true --confirm'
+                    sh 'sleep 15'
+                    sh 'oc new-app $dockerImage:$BUILD_NUMBER --insecure-registry=true --name=$dockerImage'
+                    sh 'oc expose svc/$dockerImage'
+                 }
+                }
+            }
+        }
+    }
+}
